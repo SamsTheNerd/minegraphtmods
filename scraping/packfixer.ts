@@ -46,7 +46,7 @@ var ALL_MODS = getAllMods();
 var getPacksForIdx = (idx: number = 0) => {
     var modid = ALL_MODS[idx]
     var mod = Mod.getMod(modid)
-    if(!mod.hasModpacks()){
+    if(modid && !mod.hasModpacks()){
         console.log(`Getting packs for ${modid}`)
         mod.getCFMeta().then(cfm => {
             mod.getModpacks().then((mps) => {
