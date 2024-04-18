@@ -25,8 +25,14 @@ export class CFMeta {
 
     downloadCount: number;
 
+    #available: boolean = true;
+
     constructor(cfJson: any = null){
         if(cfJson == null){
+            return;
+        }
+        this.#available = cfJson["isAvailable"]
+        if(this.#available == false){
             return;
         }
         this.id = cfJson["id"]
@@ -55,6 +61,10 @@ export class CFMeta {
         }
 
         this.downloadCount = cfJson.downloadCount
+    }
+
+    isAvailable(){
+        return this.#available;
     }
 
     getMpiId(): Promise<number> {

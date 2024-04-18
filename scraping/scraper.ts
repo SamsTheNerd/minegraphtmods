@@ -82,19 +82,26 @@ var scrape = (modLimit = 100, modDepth = 0) => {
         if(!nextModId) return;
         console.log(`Scraping mod ${nextModId}`)
         var nextMod = Mod.getMod(nextModId);
-        nextMod.getModpacks().then(async (mpl) => {
-            nextMod.saveToDisk();
-            console.log(`Scraped ${(await nextMod.getCFMeta()).name} (${nextModId})`)
-            modsScraped++;
-            mpl.mpIds.forEach((pack) => {
-                if(!Modpack.hasData(pack) && !MODPACK_LOADING_QUEUE.includes(pack)){
-                    // console.log(`Added pack ${pack} to queue`)
-                    MODPACK_LOADING_QUEUE.push(pack);
-                    mpqDirty = true;
-                }
-            })
-            saveQueues();
-            scrape(modLimit, modDepth+1);
+        nextMod.getCFMeta().then((cfm) => {
+            if(!cfm.isAvailable()){
+                saveQueues();
+                scrape(modLimit, modDepth+1)
+            } else {
+                nextMod.getModpacks().then(async (mpl) => {
+                    nextMod.saveToDisk();
+                    console.log(`Scraped ${(await nextMod.getCFMeta()).name} (${nextModId})`)
+                    modsScraped++;
+                    mpl.mpIds.forEach((pack) => {
+                        if(!Modpack.hasData(pack) && !MODPACK_LOADING_QUEUE.includes(pack)){
+                            // console.log(`Added pack ${pack} to queue`)
+                            MODPACK_LOADING_QUEUE.push(pack);
+                            mpqDirty = true;
+                        }
+                    })
+                    saveQueues();
+                    scrape(modLimit, modDepth+1);
+                })
+            }
         })
     })
 }
