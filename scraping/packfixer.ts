@@ -14,7 +14,7 @@ import {Mod} from './mod'
 // plan is to loop through all the mpls, delete any with 1-99 packs - since we'll need to refetch these anyways.
 // then anything with less than 1000 modpacks we refetch their first page 
 
-var getAllMods = () => {
+var getAllMods = (): number[] => {
     return fs.readdirSync("./data/cfmeta", {
         encoding: "utf-8"
     }).map(fileName => {
@@ -22,22 +22,46 @@ var getAllMods = () => {
             return Number(fileName.replace(".json", ""))
         } catch (err){
             console.log(`couldn't read file ${fileName}`)
-            return;
+            return -1;
         }
-    })
+    }).filter((val) => val != -1)
 }
 
-getAllMods().forEach(modid => {
-    if(!modid) return;
+
+// getAllMods().forEach(modid => {
+//     var mod = Mod.getMod(modid)
+//     if(!mod.hasModpacks()){
+//         console.log(`Getting packs for ${modid}`)
+//         mod.getCFMeta().then(cfm => {
+//             mod.getModpacks().then((mps) => {
+//                 console.log(`got packs for ${cfm.name} (${modid})`)
+//             })
+//         })
+//     } else {
+//         console.log(`Already had packs for ${modid}`)
+//     }
+// })
+
+var ALL_MODS = getAllMods();
+var getPacksForIdx = (idx: number = 0) => {
+    var modid = ALL_MODS[idx]
     var mod = Mod.getMod(modid)
     if(!mod.hasModpacks()){
         console.log(`Getting packs for ${modid}`)
         mod.getCFMeta().then(cfm => {
             mod.getModpacks().then((mps) => {
-                console.log(`got packs for ${cfm.name} (${modid})`)
+                mod.saveToDisk()
+                console.log(`got packs for ${cfm.name} (${modid}) -- ${Math.floor(100 * idx / ALL_MODS.length)}% (${idx} / ${ALL_MODS.length})`)
+                if(idx < ALL_MODS.length){
+                    getPacksForIdx(idx+1)
+                }
             })
         })
     } else {
-        console.log(`Already had packs for ${modid}`)
+        if(idx < ALL_MODS.length){
+            getPacksForIdx(idx+1)
+        }
     }
-})
+}
+
+getPacksForIdx()
