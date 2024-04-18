@@ -1,0 +1,1 @@
+{"mpiId":45567,"id":882495,"name":"fix GPU memory leak[Forge/Fabric]","slug":"fix-gpu-memory-leak","sourceLink":null,"categories":["cosmetic","utility-qol"],"devs":["someaddon"],"dependencies":{},"summary":"A mod that fixes memory leaks on the client","logoUrl":"https://media.forgecdn.net/avatars/841/827/638236647684351264.png","downloadCount":10530422}

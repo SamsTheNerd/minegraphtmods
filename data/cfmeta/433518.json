@@ -1,0 +1,1 @@
+{"mpiId":21560,"id":433518,"name":"LazyDFU","slug":"lazydfu","sourceLink":"https://github.com/astei/lazydfu","categories":["server-utility"],"devs":["tuxed"],"dependencies":{},"summary":"Makes the initialization of DataFixerUpper \"lazy\", making the game start more quickly","logoUrl":"https://media.forgecdn.net/avatars/328/780/637453335841858311.png","downloadCount":18489863}

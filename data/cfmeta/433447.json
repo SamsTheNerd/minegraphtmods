@@ -1,0 +1,1 @@
+{"mpiId":21536,"id":433447,"name":"MixinTrace","slug":"mixintrace","sourceLink":"https://github.com/comp500/mixintrace","categories":["mc-miscellaneous"],"devs":["comp500"],"dependencies":{},"summary":"Adds a list of mixins in the stack trace to crash reports","logoUrl":"https://media.forgecdn.net/avatars/328/698/637453120714460814.png","downloadCount":8078061}
