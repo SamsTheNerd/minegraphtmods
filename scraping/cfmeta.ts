@@ -50,7 +50,9 @@ export class CFMeta {
         })
 
         this.summary = cfJson["summary"]
-        this.logoUrl = cfJson.logo.url
+        if(cfJson.logo){
+            this.logoUrl = cfJson.logo.url
+        }
 
         this.downloadCount = cfJson.downloadCount
     }
