@@ -51,7 +51,7 @@ var getPacksForIdx = (idx: number = 0) => {
         mod.getCFMeta().then(cfm => {
             mod.getModpacks().then((mps) => {
                 mod.saveToDisk()
-                console.log(`got packs for ${cfm.name} (${modid}) -- ${Math.floor(100 * idx / ALL_MODS.length)}% (${idx} / ${ALL_MODS.length})`)
+                console.log(`got ${mps.mpIds.length} packs for ${cfm.name} (${modid}) -- ${Math.floor(100 * idx / ALL_MODS.length)}% (${idx} / ${ALL_MODS.length})`)
                 if(idx < ALL_MODS.length){
                     getPacksForIdx(idx+1)
                 }
