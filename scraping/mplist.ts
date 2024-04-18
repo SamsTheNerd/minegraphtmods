@@ -53,21 +53,23 @@ export class MPList {
                             throw err;
                         }
                         var mpCount:number = resData.meta.total
-                        var pageCount = Math.ceil(mpCount / 100)
+                        var pageCount = Math.ceil(mpCount / 100.0)
+                        var pageOneMPL = new MPList(_cfid, resData.data.flatMap((mpData: any) => {
+                            // if(mpData.curse_info != null)
+                            //     return mpData.curse_info.curse_id
+                            return mpData.id
+                        }))
                         if(page == 1 && pageCount > 1){
-                            var mpCount:number = resData.meta.total
-                            var pageCount = Math.ceil(mpCount / 100)
                             var moreProms: [Promise<MPList>] = <[Promise<MPList>]><unknown> []
-                            for(var p = 2; p < Math.min(pageCount, 20); p++){
+                            for(var p = 2; p <= Math.min(pageCount, 20); p++){
                                 moreProms.push(MPList.fetchPacks(_cfid, p, mpiId))
                             }
-                            Promise.all(moreProms).then((mpls) => resolve(new MPList(_cfid, [... new Set(mpls.flatMap(mpl => mpl.mpIds))])))
+                            Promise.all(moreProms).then((mpls) => {
+                                mpls.push(pageOneMPL)
+                                resolve(new MPList(_cfid, [... new Set(mpls.flatMap(mpl => mpl.mpIds))]))
+                            })
                         } else {
-                            resolve(new MPList(_cfid, resData.data.flatMap((mpData: any) => {
-                                // if(mpData.curse_info != null)
-                                //     return mpData.curse_info.curse_id
-                                return mpData.id
-                            })))
+                            resolve(pageOneMPL)
                         }
                     })
                 }

@@ -44,6 +44,13 @@ class Mod {
         return !fs.existsSync(`./data/cfmeta/${this.cfid}.json`)
     }
 
+    hasModpacks(): boolean{
+        if(this.#mpListPromise != undefined){
+            return true;
+        }
+        return fs.existsSync(`./data/mplists/${this.cfid}.json`)
+    }
+
     getCFMeta(): Promise<CFMeta> {
         if(this.#cfMetaPromise != undefined){
             return this.#cfMetaPromise;
