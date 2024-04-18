@@ -58,7 +58,7 @@ export class MPList {
                             var mpCount:number = resData.meta.total
                             var pageCount = Math.ceil(mpCount / 100)
                             var moreProms: [Promise<MPList>] = <[Promise<MPList>]><unknown> []
-                            for(var p = 2; p < pageCount; p++){
+                            for(var p = 2; p < Math.min(pageCount, 20); p++){
                                 moreProms.push(MPList.fetchPacks(_cfid, p, mpiId))
                             }
                             Promise.all(moreProms).then((mpls) => resolve(new MPList(_cfid, [... new Set(mpls.flatMap(mpl => mpl.mpIds))])))

@@ -45,6 +45,14 @@ export class Modpack{
         return MODPACK_CACHE[_mpiId]
     }
 
+    // (or getting it)
+    static hasData(_mpiId: number): boolean{
+        if(MODPACK_CACHE.hasOwnProperty(_mpiId)){
+            return true;
+        }
+        return fs.existsSync(`./data/modpacks/${_mpiId}.json`)
+    }
+
     static async #fetchMods(mpiId: number): Promise<Modpack>{
         return new Promise((resolve) => {
             var url = `https://www.modpackindex.com/api/v1/modpack/${mpiId}/mods`

@@ -73,7 +73,12 @@ export class CFMeta {
                         // console.log(`BODY: ${chunk}\n\n`);
                     });
                     res.on('end', () => {
-                        var modResults: [any] = JSON.parse(data)['data']
+                        var modResults: [any];
+                        try{
+                            modResults = JSON.parse(data)['data'];
+                        } catch (err){
+                            console.log(`error loading mpi id: \n${err}\n\ndata: ${data}`)
+                        }
                         if(modResults.length > 0){
                             this.mpiId = modResults[0].id;
                             // console.log(`resolving ${this.mpiId} from fetch`)

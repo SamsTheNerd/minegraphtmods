@@ -37,6 +37,13 @@ class Mod {
         return MOD_CACHE[_cfid]
     }
 
+    isNew(): boolean{
+        if(this.#cfMetaPromise != undefined){
+            return false;
+        }
+        return !fs.existsSync(`./data/cfmeta/${this.cfid}.json`)
+    }
+
     getCFMeta(): Promise<CFMeta> {
         if(this.#cfMetaPromise != undefined){
             return this.#cfMetaPromise;
@@ -86,7 +93,11 @@ class Mod {
         // check for it in data folder
         this.#mpListPromise = MPList.fromDisk(this.cfid).catch(() => {
             // if it can't read from disk, fetch it
-            var fetchPromise = this.getCFMeta().then(cfm => MPList.fetchPacks(this.cfid, 1, cfm.mpiId) );
+            var fetchPromise = this.getCFMeta().then(cfm => {
+                return cfm.getMpiId().then((_mfiId) => {
+                    return MPList.fetchPacks(this.cfid, 1, _mfiId);
+                })
+            });
             fetchPromise.then(() => {
                 this.#mplDirty = true;
             })
@@ -141,7 +152,7 @@ async function test(){
     // hex.saveToDisk();
 }
 
-console.log(SECRETS.cf)
+// console.log(SECRETS.cf)
 
 // test()
 
