@@ -1,0 +1,1 @@
+{"mpiId":38879,"id":677580,"name":"Restart Server (Fabric/Quilt)","slug":"restart-server","sourceLink":null,"categories":["utility-qol","server-utility"],"devs":["steveplays28"],"dependencies":{"306612":3,"348521":3},"summary":"Adds a restart command to dedicated servers.","logoUrl":"https://media.forgecdn.net/avatars/609/660/637990904546606878.png","downloadCount":2316}
