@@ -1,0 +1,1 @@
+{"mpiId":55156,"id":966168,"name":"Use System Language","slug":"use-system-language","sourceLink":null,"categories":["kubejs","utility-qol","bug-fixes"],"devs":["mikhailtapio"],"dependencies":{},"summary":"Use system lang if it wasn't set.","logoUrl":"https://media.forgecdn.net/avatars/938/59/638416933180390899.png","downloadCount":411}
