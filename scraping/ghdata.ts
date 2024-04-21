@@ -32,6 +32,16 @@ export class GHData {
         }
     }
 
+    numInteractions(user:string, type: InteractionType = null): number{
+        if(!this.interactions.hasOwnProperty(user)) return 0;
+        if(type == null){
+            return this.numInteractions(user, InteractionType.ISSUE_POST) + this.numInteractions(user, InteractionType.PR_POST)
+                +  this.numInteractions(user, InteractionType.ISSUE_COMMENT) + this.numInteractions(user, InteractionType.PR_COMMENT)
+        }
+        if(!this.interactions[user][type]) return 0; 
+        return this.interactions[user][type];
+    }
+
     static fromDisk(_cfid: number, path = "./data"): Promise<GHData> {
         return fsp.readFile(`${path}/ghdata/${_cfid}.json`, { encoding: 'utf8' }).then((fileData) => {
             return Object.assign(new GHData(_cfid), {interactions: JSON.parse(fileData)});

@@ -165,6 +165,21 @@ class Mod {
             this.getGHData().then(ghd => ghd.saveToDisk())
         }
     }
+
+    
+    static getAllMods = (): number[] => {
+        return fs.readdirSync("./data/cfmeta", {
+            encoding: "utf-8"
+        }).map(fileName => {
+            try{
+                return Number(fileName.replace(".json", ""))
+            } catch (err){
+                console.log(`couldn't read file ${fileName}`)
+                return -1;
+            }
+        }).filter((val) => val != -1)
+    }
+
 }
 
 async function test(){
