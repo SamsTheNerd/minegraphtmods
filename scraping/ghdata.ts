@@ -3,14 +3,14 @@ import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 
 import {Mod} from './mod'
-import { Octokit } from 'octokit';
+import { Octokit, RequestError } from 'octokit';
 
 const SECRETS = require('../secrets.json')
 
 const GH_URL_REGEX = /(?:.*github.com\/)([^\/]+)\/([^\/\n]+)/
 const ISSUE_GRABBER = /\/([0-9])+$/
 
-const octokit = new Octokit({ auth: SECRETS.gh });
+var octokit:Octokit = new Octokit({ auth: SECRETS.gh });
 
 export class GHData {
     cfid: number; 
@@ -46,59 +46,73 @@ export class GHData {
 
     static async fetchGHData(_cfid: number): Promise<GHData>{
         var repo = await Mod.getMod(_cfid).getGHRepo();
-        if(!repo) return null;
-        const issueIterator = octokit.paginate.iterator(octokit.rest.issues.listForRepo, {
-            "owner": repo.owner,
-            "repo": repo.repo,
-            "per_page": 100,
-            "state": "all"
-        })
-        const commentIterator = octokit.paginate.iterator(octokit.rest.issues.listCommentsForRepo, {
-            "owner": repo.owner,
-            "repo": repo.repo,
-            "per_page": 100,
-            "state": "all"
-        })
+        if(!repo) return new GHData(_cfid, {});
+        try{
+            const issueIterator = octokit.paginate.iterator(octokit.rest.issues.listForRepo, {
+                "owner": repo.owner,
+                "repo": repo.repo,
+                "per_page": 100,
+                "state": "all"
+            })
+            const commentIterator = octokit.paginate.iterator(octokit.rest.issues.listCommentsForRepo, {
+                "owner": repo.owner,
+                "repo": repo.repo,
+                "per_page": 100,
+                "state": "all"
+            })
 
-        var interactions: {[key: string]: {[key in InteractionType]?: number}} = {}
-        
-        var prOrNot: {[key: number]: boolean} = {}
+            var interactions: {[key: string]: {[key in InteractionType]?: number}} = {}
+            
+            var prOrNot: {[key: number]: boolean} = {}
 
-        for await (const { data: issues } of issueIterator){
-            for (const issue of issues) {
-                var isPR = issue.pull_request != null ? true : false;
-                prOrNot[issue.number] = isPR;
-                // console.log("%s #%d: %s", isPR ? "PR" : "Issue", issue.number, issue.title);
-                if(!interactions[issue.user.login]){
-                    interactions[issue.user.login] = {}
+            for await (const { data: issues } of issueIterator){
+                // console.log(`\t\t-> issue response !!`)
+                for (const issue of issues) {
+                    var isPR = issue.pull_request != null ? true : false;
+                    prOrNot[issue.number] = isPR;
+                    // console.log("\t\t%s #%d: %s", isPR ? "PR" : "Issue", issue.number, issue.title);
+                    if(!interactions[issue.user.login]){
+                        interactions[issue.user.login] = {}
+                    }
+                    var interType = isPR ? InteractionType.PR_POST : InteractionType.ISSUE_POST;
+                    if(!interactions[issue.user.login][interType]){
+                        interactions[issue.user.login][interType] = 0
+                    }
+                    interactions[issue.user.login][interType]++
+                    // interactions[issue.user.login].push(new GHInteraction(issue.id, isPR ? InteractionType.PR_POST : InteractionType.ISSUE_POST))
+
                 }
-                var interType = isPR ? InteractionType.PR_POST : InteractionType.ISSUE_POST;
-                if(!interactions[issue.user.login][interType]){
-                    interactions[issue.user.login][interType] = 0
-                }
-                interactions[issue.user.login][interType]++
-                // interactions[issue.user.login].push(new GHInteraction(issue.id, isPR ? InteractionType.PR_POST : InteractionType.ISSUE_POST))
-
             }
-        }
 
-        for await (const { data: comments } of commentIterator){
-            for (const comment of comments) {
-                var issueNum = Number.parseInt(ISSUE_GRABBER.exec(comment.issue_url)[1])
-                var isPR = prOrNot[issueNum]
-                // console.log("Comment on %s %s by %s: %s", isPR ? "PR" : "Issue", comment.issue_url, comment.user.login, comment.body);
-                if(!interactions[comment.user.login]){
-                    interactions[comment.user.login] = {}
+            for await (const { data: comments } of commentIterator){
+                // console.log(`\t\t-> comment response !!`)
+                for (const comment of comments) {
+                    var issueNumSplit = comment.issue_url.split("/");
+                    var issueNum = Number.parseInt(issueNumSplit[issueNumSplit.length - 1])
+                    // var issueNum = Number.parseInt(ISSUE_GRABBER.exec(comment.issue_url)[1])
+                    var isPR = prOrNot[issueNum]
+                    // console.log("\t\tComment on %s %s by %s: %s", isPR ? "PR" : "Issue", comment.issue_url, comment.user.login, comment.body);
+                    if(!interactions[comment.user.login]){
+                        interactions[comment.user.login] = {}
+                    }
+                    var interType = isPR ? InteractionType.PR_COMMENT : InteractionType.ISSUE_COMMENT;
+                    if(!interactions[comment.user.login][interType]){
+                        interactions[comment.user.login][interType] = 0
+                    }
+                    interactions[comment.user.login][interType]++
                 }
-                var interType = isPR ? InteractionType.PR_COMMENT : InteractionType.ISSUE_COMMENT;
-                if(!interactions[comment.user.login][interType]){
-                    interactions[comment.user.login][interType] = 0
-                }
-                interactions[comment.user.login][interType]++
             }
-        }
 
-        return new GHData(_cfid, interactions);
+            return new GHData(_cfid, interactions);
+        } catch (err){
+            if(err instanceof RequestError){
+                if(err.status == 404){
+                    console.log("\t-> 404, invalid repo")
+                    return new GHData(_cfid, {});;
+                }
+            }
+            throw err;
+        }
     }
 }
 
@@ -132,8 +146,16 @@ var test = async () => {
     var gloop = new Mod(897558)
     var hex = new Mod(569849);
     // console.log(JSON.stringify(await GHData.fetchGHData(897558), null, 2))
-    console.log(await gloop.getGHData())
-    gloop.saveToDisk()
+    // var gloopGHD = gloop.getGHData()
+    // var hexGHD = hex.getGHData();
+    // console.log(await gloopGHD);
+    // console.log(await hexGHD)
+    // gloop.saveToDisk()
+    // hex.saveToDisk()
 }
 
-test()
+// test()
+
+export {
+    octokit
+}

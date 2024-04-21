@@ -54,6 +54,13 @@ class Mod {
         return fs.existsSync(`./data/mplists/${this.cfid}.json`)
     }
 
+    hasGHData(): boolean{
+        if(this.#ghDataPromise != undefined){
+            return true;
+        }
+        return fs.existsSync(`./data/ghdata/${this.cfid}.json`)
+    }
+
     getCFMeta(): Promise<CFMeta> {
         if(this.#cfMetaPromise != undefined){
             return this.#cfMetaPromise;
