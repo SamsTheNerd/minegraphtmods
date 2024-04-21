@@ -44,6 +44,12 @@ export class GHData {
         )
     }
 
+    static async copyData(srcCfid: number, dstCfid: number, path = "./data"){
+        var srcData = await this.fromDisk(srcCfid)
+        srcData.cfid = dstCfid;
+        await srcData.saveToDisk()
+    }
+
     static async fetchGHData(_cfid: number): Promise<GHData>{
         var repo = await Mod.getMod(_cfid).getGHRepo();
         if(!repo) return new GHData(_cfid, {});

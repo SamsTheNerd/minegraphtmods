@@ -33,31 +33,39 @@ var getAllMods = (): number[] => {
 //     }
 // })
 
+var SOURCE_LOOKUP: { [key: string]: number } = {}
+
 var ALL_MODS = getAllMods();
-var getPacksForIdx = (idx: number = 0) => {
+var getPacksForIdx = async (idx: number = 0) => {
     var modid = ALL_MODS[idx]
     var mod = Mod.getMod(modid)
-    if(modid && !mod.hasGHData()){
-        mod.getCFMeta().then(cfm => {
-            console.log(`Getting github data for ${cfm.name} ( ${modid} | ${cfm.sourceLink} )`)
-            mod.getGHData().then((ghd) => {
-                if(ghd == null){
-                    console.log(`\t-> No GitHub data for ${cfm.name} ( ${modid} | ${cfm.sourceLink} )\n`)
-                } else {
-                    mod.saveToDisk()
-                    console.log(`\t-> Got ${Object.keys(ghd.interactions).length} users for ${cfm.name} ( ${modid} | ${cfm.sourceLink} )`) 
-                    console.log(`\t-> ${Math.floor(100 * idx / ALL_MODS.length)}% (${idx+1} / ${ALL_MODS.length})`)
-                    console.log()
-                }
-                if(idx < ALL_MODS.length){
-                    getPacksForIdx(idx+1)
-                }
-            })
-        })
-    } else {
+    if(!modid){
         if(idx < ALL_MODS.length){
             getPacksForIdx(idx+1)
         }
+        return;
+    }
+    var cfm = await mod.getCFMeta();
+    if(SOURCE_LOOKUP.hasOwnProperty(cfm.sourceLink) && cfm.sourceLink != null){
+        console.log(`wow, saving time reusing that source lookup for ${cfm.name} !!`)
+        await GHData.copyData(SOURCE_LOOKUP[cfm.sourceLink], modid)
+    } else {
+        SOURCE_LOOKUP[cfm.sourceLink] = modid;
+    }
+    if(!mod.hasGHData()){
+        console.log(`Getting github data for ${cfm.name} ( ${modid} | ${cfm.sourceLink} )`)
+        var ghd = await mod.getGHData();
+        if(ghd == null){
+            console.log(`\t-> No GitHub data for ${cfm.name} ( ${modid} | ${cfm.sourceLink} )\n`)
+        } else {
+            console.log(`\t-> Got ${Object.keys(ghd.interactions).length} users for ${cfm.name} ( ${modid} | ${cfm.sourceLink} )`) 
+            console.log(`\t-> ${Math.floor(100 * idx / ALL_MODS.length)}% (${idx+1} / ${ALL_MODS.length})`)
+            console.log()
+            mod.saveToDisk()
+        }
+    }
+    if(idx < ALL_MODS.length){
+        getPacksForIdx(idx+1)
     }
 }
 
