@@ -7,6 +7,7 @@ var SECRETS = require('../secrets.json')
 import {CFMeta} from './cfmeta'
 import {MPList} from './mplist'
 import {Modpack} from './modpack'
+import {GHData} from './ghdata'
 
 
 var MOD_CACHE: { [key:string]:Mod; } = {}
@@ -20,9 +21,11 @@ class Mod {
 
     #cfMetaPromise: Promise<CFMeta>;
     #mpListPromise: Promise<MPList>;
+    #ghDataPromise: Promise<GHData>;
 
     #cfDirty = false;
     #mplDirty = false;
+    #ghdDirty = false;
 
     // use getMod() instead of this
     constructor(_cfid:number){
@@ -90,6 +93,11 @@ class Mod {
         return this.#cfMetaPromise;
     }
 
+    async getGHRepo(){
+        var cfm = await this.getCFMeta()
+        return GHData.parseUrl(cfm.sourceLink)
+    }
+
     getModpacks(): Promise<MPList> {
         if(this.#mpListPromise != undefined){
             return this.#mpListPromise;
@@ -114,6 +122,28 @@ class Mod {
         return this.#mpListPromise;
     }
 
+    getGHData(): Promise<GHData> {
+        if(this.#ghDataPromise != undefined){
+            return this.#ghDataPromise;
+        }
+        if(INVALID_MOD_SET.hasOwnProperty(this.cfid)){
+            return Promise.reject("couldnt find mod");
+        }
+        // check for it in data folder
+        this.#ghDataPromise = GHData.fromDisk(this.cfid).catch(() => {
+            // if it can't read from disk, fetch it
+            var fetchPromise = this.getCFMeta().then(cfm => {
+                return GHData.fetchGHData(this.cfid);
+            });
+            fetchPromise.then(() => {
+                this.#ghdDirty = true;
+            })
+            return fetchPromise;
+        })
+        // fetch the data
+        return this.#ghDataPromise;
+    }
+
     async saveToDisk(){
         if(this.#cfDirty){
             this.#cfDirty = false;
@@ -123,15 +153,12 @@ class Mod {
             this.#mplDirty = false;
             this.getModpacks().then(mpl => mpl.saveToDisk())
         }
+        if(this.#ghdDirty){
+            this.#ghdDirty = false;
+            this.getGHData().then(ghd => ghd.saveToDisk())
+        }
     }
 }
-
-// store all the different data sources in different files for more piecewise interactions ?
-
-class GHData {
-
-}
-
 
 async function test(){
     var gloop = Mod.getMod(897558)
