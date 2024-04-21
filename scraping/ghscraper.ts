@@ -59,7 +59,7 @@ var getPacksForIdx = async (idx: number = 0) => {
             console.log(`\t-> No GitHub data for ${cfm.name} ( ${modid} | ${cfm.sourceLink} )\n`)
         } else {
             console.log(`\t-> Got ${Object.keys(ghd.interactions).length} users for ${cfm.name} ( ${modid} | ${cfm.sourceLink} )`) 
-            console.log(`\t-> ${Math.floor(100 * idx / ALL_MODS.length)}% (${idx+1} / ${ALL_MODS.length})`)
+            console.log(`\t-> ${Math.floor(100 * idx / ALL_MODS.length)}% (${idx+2} / ${ALL_MODS.length})`)
             console.log()
             mod.saveToDisk()
         }
