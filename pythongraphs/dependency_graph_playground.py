@@ -10,7 +10,7 @@ from networkx import graph_atlas_g
 
 
 # Read in graph file
-G = nx.read_weighted_edgelist("./computedData/dependency_graph.data", comments="%", create_using=nx.DiGraph)
+G = nx.read_edgelist("./computedData/dependency_graph.data", comments="%", create_using=nx.DiGraph)
 
 scale = 0.5
 
@@ -35,6 +35,14 @@ for n in G:
     else:
         G.nodes[n]["width"] = 2.5 * scale
         G.nodes[n]["height"] = 2.5 * scale
+
+for e in G.edges:
+    dtype = G.edges[e]["dtype"]
+    if dtype == 2:
+        G.edges[e]["style"] = "dashed"
+    elif dtype != 3:
+        G.edges[e]["style"] = "dotted"
+
 
 A = nx.nx_agraph.to_agraph(G)
 A.graph_attr["overlap"] = "false"

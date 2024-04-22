@@ -18,13 +18,13 @@ var loadQueues = () => {
     var mqStr = fs.readFileSync("./state/mod_queue.json", {
         encoding: 'utf-8'
     })
-    MOD_LOADING_QUEUE = JSON.parse(mqStr);
+    MOD_LOADING_QUEUE = [...new Set<number>(JSON.parse(mqStr))];
     mqDirty = false;
 
     var mpqStr = fs.readFileSync("./state/mp_queue.json", {
         encoding: 'utf-8'
     })
-    MODPACK_LOADING_QUEUE = JSON.parse(mpqStr);
+    MODPACK_LOADING_QUEUE = [...new Set<number>(JSON.parse(mpqStr))];
     mpqDirty = false;
 }
 
@@ -41,7 +41,6 @@ var saveQueues = () => {
 
 // scrapes the next modpack
 var scrapePack = ():Promise<void> => {
-    console.log(`shifting mp queue: ${MODPACK_LOADING_QUEUE.length}`)
     var nextPackId = MODPACK_LOADING_QUEUE.shift()
     mpqDirty = true;
     if(!nextPackId) return Promise.reject();
@@ -87,6 +86,14 @@ var scrape = (modLimit = 100, modDepth = 0) => {
                 saveQueues();
                 scrape(modLimit, modDepth+1)
             } else {
+                for(var depidString in cfm.dependencies){
+                    var depid = Number.parseInt(depidString)
+                    var dep = Mod.getMod(depid)
+                    if(dep.isNew()){
+                        MOD_LOADING_QUEUE.push(depid)
+                        mqDirty = true
+                    }
+                }
                 nextMod.getModpacks().then(async (mpl) => {
                     nextMod.saveToDisk();
                     console.log(`Scraped ${(await nextMod.getCFMeta()).name} (${nextModId})`)
@@ -106,5 +113,25 @@ var scrape = (modLimit = 100, modDepth = 0) => {
     })
 }
 
+var addDepsToQueue = async () => {
+    const ALL_MODS = Mod.getAllMods()
+    for(var modid of ALL_MODS){
+        var mod = Mod.getMod(modid)
+        var cfm = await mod.getCFMeta()
+        for(var depidString in cfm.dependencies){
+            var depid = Number.parseInt(depidString)
+            var dep = Mod.getMod(depid)
+            if(dep.isNew() && !MOD_LOADING_QUEUE.includes(depid)){
+                console.log(`added dep ${depid} from ${modid}`)
+                MOD_LOADING_QUEUE.push(depid)
+                mqDirty = true
+            }
+        }
+        saveQueues()
+    }
+}
+
 loadQueues()
 scrape(1000)
+
+// addDepsToQueue()

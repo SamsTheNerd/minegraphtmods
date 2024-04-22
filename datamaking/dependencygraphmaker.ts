@@ -17,7 +17,8 @@ var make = async () => {
         var mod = Mod.getMod(modid);
         var cfm = await mod.getCFMeta();
         for( var depid in cfm.dependencies){
-            edgeList.push(`${modid} ${depid} ${cfm.dependencies[depid]}`)
+            if(cfm.dependencies[depid] == 5) continue;
+            edgeList.push(`${modid} ${depid} {'dtype':${cfm.dependencies[depid]}}`)
         }
     }
     
