@@ -12,11 +12,36 @@ from networkx import graph_atlas_g
 # Read in graph file
 G = nx.read_weighted_edgelist("./computedData/dependency_graph.data", comments="%", create_using=nx.DiGraph)
 
+scale = 0.5
+
+for n in G:
+    G.nodes[n]["image"] = f'./data/images/{n}.png'
+    G.nodes[n]["imagescale"] = True
+    G.nodes[n]["fixedsize"] = True
+    G.nodes[n]["shape"] = "rectangle"
+    # G.in_degree(n)
+    if(G.in_degree(n) == 0):
+        G.nodes[n]["width"] = 1 * scale
+        G.nodes[n]["height"] = 1 * scale
+    elif(G.in_degree(n) < 5):
+        G.nodes[n]["width"] = 1.5 * scale
+        G.nodes[n]["height"] = 1.5 * scale
+    elif(G.in_degree(n) < 15):
+        G.nodes[n]["width"] = 2 * scale
+        G.nodes[n]["height"] = 2 * scale
+    elif(G.in_degree(n) > 50):
+        G.nodes[n]["width"] = 4 * scale
+        G.nodes[n]["height"] = 4 * scale
+    else:
+        G.nodes[n]["width"] = 2.5 * scale
+        G.nodes[n]["height"] = 2.5 * scale
+
 A = nx.nx_agraph.to_agraph(G)
-A.graph_attr["overlap"] = "compress"
-A.graph_attr["nodesep"] = 1
-A.graph_attr["ranksep"] = 2
-A.draw("./pythongraphs/dependency_graph.svg", prog="dot")
+A.graph_attr["overlap"] = "false"
+# A.graph_attr["nodesep"] = 2
+# A.graph_attr["ranksep"] = 1
+# A.graph_attr["overlap_scaling"] = 10
+A.draw("./pythongraphs/dependency_graph.png", prog="sfdp")
 
 # nx.draw(G, pos=nx.spring_layout(G))
 

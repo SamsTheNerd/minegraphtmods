@@ -2,3 +2,4 @@ secrets.json
 .vscode
 .DS_Store
 data/images/
+local/
