@@ -7,12 +7,18 @@ import math
 import random
 import operator
 from networkx import graph_atlas_g
+from os import listdir
 
 
 # Read in graph file
 G = nx.read_edgelist("./computedData/dependency_graph.data", comments="%", create_using=nx.DiGraph)
 
 scale = 0.5
+
+for f in listdir("./data/cfmeta"):
+    modid = f.split(".json")[0]
+    if modid not in G:
+        G.add_node(modid)
 
 for n in G:
     G.nodes[n]["image"] = f'./data/images/{n}.png'

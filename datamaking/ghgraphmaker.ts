@@ -29,6 +29,18 @@ const USER_COUNT = Object.keys(USER_VIEW).length
 //     fs.writeFileSync(`./computedData/mc_gh_graph.data`, edgeList.join('\n'))
 // }
 
+var weightMap: { [key: string]: number } = {}
+
+var addWeight = (modA: number, modB: number, newInteractions: number) => {
+    var minMod = Math.min(modA, modB)
+    var maxMod = Math.max(modA, modB)
+    var key = `${minMod} ${maxMod}`
+    if(!weightMap.hasOwnProperty(key)){
+        weightMap[key] = 0
+    }
+    weightMap[key] += newInteractions
+}
+
 var edgeList: string[] = []
 
 var makeForUser = async (user: string) => {
@@ -40,6 +52,7 @@ var makeForUser = async (user: string) => {
     for(var i = 0; i < userrepos.length; i++){
         for(var j = i+1; j < userrepos.length; j++){
             edgeList.push(`${userrepos[i]} ${userrepos[j]} {'weight':${userInteractions[i] + userInteractions[j]}, 'user': '${user}'}`)
+            addWeight(userrepos[i], userrepos[j], userInteractions[i] + userInteractions[j]);
         }
     }
 }
@@ -58,6 +71,7 @@ var make = async () => {
     }
     await Promise.all(userproms)
     fs.writeFileSync(`./computedData/mc_gh_graph.data`, edgeList.join('\n'))
+    fs.writeFileSync(`./computedData/mc_gh_graph_flat.data`, Object.keys(weightMap).map((key) => `${key} ${weightMap[key]}`).join('\n'))
 }
 
 make()
