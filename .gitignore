@@ -3,3 +3,10 @@ secrets.json
 .DS_Store
 data/images/
 local/
+
+# latex build stuff 
+*.aux
+*.fdb_latexmk
+*.fls
+*.log
+*.synctex.gz
