@@ -57,6 +57,7 @@ for n in T:
 
 A = nx.nx_agraph.to_agraph(T)
 A.graph_attr["overlap"] = "false"
+A.graph_attr["outputorder"] = "edgesfirst"
 # A.graph_attr["splines"] = "true"
 # A.graph_attr["nodesep"] = 2
 # A.graph_attr["ranksep"] = 1

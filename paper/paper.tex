@@ -1,5 +1,5 @@
 
-\documentclass[a4paper,12pt, twocolumn]{article}
+\documentclass[a4paper,11pt, twocolumn]{article}
 
 \usepackage{fullpage}
 \usepackage{amsmath,amssymb}
@@ -8,6 +8,7 @@
 \usepackage{graphicx}
 \usepackage{dsfont}
 \usepackage{multicol}
+\usepackage{hyperref}
 \usepackage{tikz}
 \usetikzlibrary{positioning}
 
@@ -62,9 +63,61 @@ Now that we have some data we can start playing with it. The graph data was put 
 
 I started by transforming the data into a few different views, specifically a \verb|USER_VIEW| that maps github users to the repos they interact with and a \verb|MP_VIEW| that maps modpacks to the mods they contain (that we scraped). Note that the \verb|MP_VIEW| is different from the scraped modpack data since we only directly scrape modpacks to fuel our mod queue but this view contains all modpacks referenced in our mod scraping. These views are quick to construct but give us constant time lookup of mods by user and modpack, which helps us more efficiently construct our graphs.\\
 
-The first graph I made was a simple dependency graph, with mods as nodes and directed edges from each mod to any mod it depends on. I then loaded it into python with networkx and used pygraphviz with the sfdp layout mode to render the graph. Since we scraped the images before, we can use those for the nodes of the rendered graph to make it easier to identify what each node actually is.\\
+The first graph I made was a simple dependency graph, with mods as nodes and directed edges from each mod to any mod it depends on. I then loaded it into python with networkx and used pygraphviz with the sfdp layout mode to render the graph. Since we scraped the images before, we can use those for the nodes of the rendered graph to make it easier to identify what each node actually is. It took a while to find a graphviz setup that made a decent graph render, some of the issues I ran into included nodes overlapping, poor scaling that maxed out the image writer resolution making giant and unreadable images, and edges covering nodes.\\
 
+Next I made the GitHub data graph, with mods as nodes and edges for each shared contributor weighted by number of interactions. This ended up being much denser. The first render of it took a while and came out as mostly a large black blob of edges. To get around this I flattened the data, so instead of being a multi graph with a unique edge for each shared user between any repos it just uses a single weighted edge between each repo with shared contributors. This ran faster but still gave a blob of edges. To reduce the number of edges I added a threshold that kept only the top 5\% of edges on each node, this gave a much more readable render but may have sacrified some precision in the shaping. There's also a render of the subgraph induced on the neighborhood of my mod `HexGloop' using the same threshold method.\\
 
+Finally we have the modpack graph. This was by far the hardest to generate the data for simply because of how dense it was. My initial solution was to iterate over every pair of mods and take the intersection of modpacks that they're each in, but this was highly inefficient as most mod pairs will have relatively few packs in common and calculating the intersection is relatively expensive. It took a couple minutes to get 2\% finished, so I killed the program and tried another way. The second attempt iterated over all modpacks using the \verb|MP_VIEW| and incremented a counter for each pair of mods it found in the modpack. At the end these counters would tell us how many packs each pair of mods shared. This ran much faster! but was consistently freezing up around 92\%. Switching from storing the counters in raw js objects to using the Map class and cleaning up some of the other code got it through the counting section but it started hitting memory limits. So finally after giving it a good 8 gigs and a couple minutes we got 280MB of raw edge data! Rendering the graph was about the same process as before except this time I discovered I can put the nodes over the edges so they don't get covered and used a higher threshold for which edges to keep with an additonal threshold for which edges were visible, which should improve the shaping of it while keeping it readable.\\
+
+During the graph making process, GitHub started throwing warnings and errors that my files were too large and suggested using Git Large File Storage (git lfs). It seemed easy enough to set up, so I did and committed my data and graph renders with it, but turns out that if you go over the quiet 1GB limit you have to either pay \$5 a month for more storage or your repo can't be properly cloned until you entirely remove git lfs from your commit history, and it's not cleared from lfs storage until you delete the entire repository. Luckily I hit that limit quickly and could just reset back to a previous commit, but I wasn't able to commit some of the larger graph data files, so they'd need to be rebuilt locally if you want to use them.
+
+\section{Results}
+
+All of the scraped data, graphs, and renders are available at \url{https://github.com/SamsTheNerd/minegraphtmods}. The graph renders are in the \verb|demos| folder.
+
+\subsection {Data}
+
+We scraped a total of about 8000 mods, with about 5000 of them having github repos we could scrape, which gave us around 122,500 total users who interacted with these repositories.\\
+
+The data had a few strong biases. First of all, since we're only scraping curseforge mods, we're completely missing all the mods that for one reason or another are only hosted on Modrinth. I would guess that those mods are going to lean towards being newer, using fabric/quilt more, and being made either by newer mod devs who don't want to set up and manage a curseforge project or older mod devs who have had bad experiences with curseforge and are purposely avoiding it. Whether my guess is true or not, it's unfortunate to not have those mods represented in this data.\\
+
+The other bias is less direct. Since our scraper collects new mods by modpack and dependency only, it's likely to find popular mods since they're going to be in many modpacks and have many chances to be found, but it's complete chance for whether or not a smaller mod that's only in a few modpacks is going to be picked up. Also, since the modpack queue moves much slower than the mod queue, it can get stuck in certain modpack niches for periods of time. As far as I could tell, this seemed to mainly prevent it from picking up on older mods on its own, so while it seemed to have already scraped most modern popular mods, I had to manually stick some older mods in the queue for it to start finding them. It's also possible that there were other bubbles it didn't pick up on that I had my own blind spots for as well. Running the scraper more would probably help with all of these just by letting it get more data, but with all that being said, there are still a lot of mods here, many that I recognize and many that I don't, so I'd still consider it a success.\\
+
+\subsection{Graphs}
+
+Since we have so much data and no real ground truth for how connected any two mods should be, the best way to see if our data looks right is just to look at the graph renders. This isn't a perfect method for a number of reasons. It requires some background knowledge of the mods and the graphs themselves aren't the most finely tuned. Also, the layout engine, \verb|sfdp|, that I used is meant for quickly laying out large graphs so while it's probably getting the general shape right, it doesn't seem to always put nodes as close to eachother as I'd expect based on their edges.\\
+
+For the rest of this section I'll be referencing specific graph renders, I suggest opening the \href{https://github.com/SamsTheNerd/minegraphtmods/tree/main/demos}{repo} to be able to follow along. I'll also be referencing specific mods in the graph, I'll give any relevant information about them, but it may be helpful to look them up to see what their icon looks like so you can find it on the graph.
+
+\subsubsection{Dependency Graph}
+
+First let's look at our dependency graph (\verb|dependency_graph_all.png|). You'll notice a few large mods with many connections, these are mostly library mods and very popular content mods. By far the largest here is Fabric API in the middle left. As previously mentioned most mods using the Fabric modloader use this, there's not a Forge equivalent in the graph since its api is built into the modloader. Besides Fabric, we can see that library mods like Quilt API, Architectury API, Kotlin, Trinkets, Curios, and documention mods like REI, JEI, Jade, and Patchouli have some of the most connections, as we'd expect.\\
+
+Some of the other most connected mods here are popular content mods, like Create (fabric version is top middle, forge is a bit lower right), Origins (bottom middle), and Farmer's Delight (middle right). You'll notice a lot of Create addons around it with the identifiable blueprint icon template and the same with various origins addons around it. Interestingly though, some of these aren't as physically close to their neighbors as you'd expect given their limited connections. While it's quite visually noticeable with the addons, it seems to also apply elsewhere in the graph, for example my mod WNBOI is quite far away from HexGloop despite having no other connections. I believe this is just from the layout engine as previously mentioned.\\
+
+Finally, looking around the edges there are many completely separated nodes. I believe these are mostly forge mods that just don't use any libraries, but some may just have their dependencies set up wrong too. Interestingly, these outer mods seem to have less designed icons, with some of them just being screenshots from ingame, I have no idea why this is but it's interesting. You may also notice some mods have their own little noticeable communities or multiple mods depending on a small personal library, like for example YUNG's Better structure mods in the very bottom middle, or Buildcraft's modules in the very top midright. It's interesting that the layout seems to put these small and strong communities on the outer edges.
+
+\subsubsection{GitHub User Graph}
+
+Moving on to our GitHub graph, feel free to take a peek at \verb|gh_graph.png|, it's a beautiful black blob. For a better graph we have \verb|gh_graph_bettericons_...png|. As mentioned before, this is approximately 5\% of the edges and it's still incredibly dense. We'll see in the middle a lot of popular mods, some of which were mentioned before on the dependency graph. You may also notice that some mods seem to appear twice, this is because some older mods were originally made for forge but later got fabric ports that are listed as different projects, however many of these share the same repo so they end up right next to eachother.\\
+
+To get an idea of how connected this graph is, there's a mod called Hex Casting, which is a relatively niche but still quite popular mod about a magical hexagon based esolang, its neighborhood in the full github graph is somewhere around 2000 nodes, so approaching half the graph. My mod HexGloop (which if you haven't guessed is an addon to Hex Casting) has a neighborhood of around 450 nodes, which is somewhere around 10\% of the full graph. I think that alone is quite neat, that the minecraft modding scene is so interconnected.\\
+
+Since this graph is so dense, let's zoom in on the subgraph induced on HexGloop's neighborhood, \verb|gh_gloopgraph| \verb|_thresholded.png|. You'll find HexGloop itself around the middle right, with Hex Casting and the other Hex addons close by. Although for some reason all five of the other Hex addons are grouped very close together, almost touching, but Hex Casting and HexGloop are slightly further. You'll also see my other mods WNBOI and Ducky Peripherals close to it and eachother, which makes sense since I'm quite active in both repos.\\
+
+Although they're partially obscured, you can also see some of the more popular mods poking through in the center, as well as a lot of the Violet Moon mods (identifiable by the purple V in the corner) are quite close to eachother. Interestingly, REI, EMI, and Patchouli all seem quite close too, I'm not sure if this is just a coincidence or not since they're all documentation mods but I don't believe have much dev overlap. Strangely though, ComputerCraft:Tweaked (CC:T) and ComputerCraft:Restitched (CC:R) are quite distant despite CC:R being a fork of CC:T, and both are quite far from Ducky Peripherals and Advanced Periphals, which are both ComputerCraft addons.\\
+
+Overall this GitHub graph seems to be pretty good at clustering mods as I'd expect it to. It's worth noting that edge weights here are simply given by the sum of interactions in both repos from any shared users, so more popular mods are likely going to have larger weights due to having more interactions. Experimenting with different weights per user could improve or change the results as well, for example counting only the PR interactions would likely show stronger connections based on dev teams, while weighing based on issue interactions and decreasing the impact of the most active users in each repo would hopefully show more of player preference (or atleast players who happen to be active on github, which is quite a strong bias).
+
+\subsubsection{Modpack Graph}
+
+Finally we have the modpack graph (\verb|mp_graph_thresholded.png|). This was by far the densest graph, with I believe around 8 Million edges before thresholding. Immediately you'll notice that the graph has two very dense sections, these appear to be made up of forge and fabric mods with a strong divide between them, which is quite cool to see that show up. Unfortunately that's about the only useful information in this graph. Since the edge weights were calculated based on number of shared modpacks divided by the minimum of the count of modpacks that each mod was in separately, you end up with mods that are only in a few modpacks having very high weights with almost everything around them while mods in a lot of modpacks get pushed to the outer edges of the graph with lower weights.
+
+\section{Conclusion}
+
+This project was a great start at collecting and analyzing data on mods. The graphs made for this project showed that the data does work to measure similarity at least to some degree, with the github data being the most promising so far.\\
+
+For future work, tweaking the edge weight calculations and combining the various data attributes collected into a single graph could make a much more useable general purpose graph. It may also be worth investigating using a weighted directed graph to better represent some sort of non symmetric similarity. And if possible, it'd be great to scrape Modrinth data as well, although that would require some reworking of the core data wrappers, including switching away from project ids/mpi ids as true names.
 
 
 \end{document}

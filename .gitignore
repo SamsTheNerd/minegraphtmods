@@ -5,6 +5,7 @@ data/images/
 local/
 
 # latex build stuff 
+*.out
 *.aux
 *.fdb_latexmk
 *.fls
