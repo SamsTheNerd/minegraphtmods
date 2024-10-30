@@ -11,3 +11,6 @@ local/
 *.fls
 *.log
 *.synctex.gz
+
+._*
+node_modules

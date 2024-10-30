@@ -1,0 +1,10 @@
+{
+  "devDependencies": {
+    "ts-node": "^10.9.2"
+  },
+  "dependencies": {
+    "octokit": "^4.0.2"
+  },
+  "@octokit/core": "^4",
+  "type": "module"
+}

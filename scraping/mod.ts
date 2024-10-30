@@ -2,12 +2,12 @@ import * as https from 'node:https';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 
-var SECRETS = require('../secrets.json')
+import SECRETS from '../secrets.json' assert { type: 'json' };
 
-import {CFMeta} from './cfmeta'
-import {MPList} from './mplist'
-import {Modpack} from './modpack'
-import {GHData} from './ghdata'
+import {CFMeta} from './cfmeta.ts'
+import {MPList} from './mplist.ts'
+import {Modpack} from './modpack.ts'
+import {GHData} from './ghdata.ts'
 
 
 var MOD_CACHE: { [key:string]:Mod; } = {}

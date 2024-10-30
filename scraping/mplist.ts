@@ -2,7 +2,7 @@ import * as https from 'node:https';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 
-import {Mod} from './mod'
+import {Mod} from './mod.ts'
 
 // list of modpacks that the given mod is in
 export class MPList {

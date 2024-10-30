@@ -1,13 +1,19 @@
 {
     "compilerOptions": {
-      "module": "commonjs",
+
+      "moduleResolution": "node16", 
+      "module": "esnext",
       "target": "ES6",
       "noImplicitAny": true,
       "removeComments": true,
       "preserveConstEnums": true,
-      "sourceMap": true
+      "sourceMap": true,
+      "allowImportingTsExtensions": true,
+      "resolveJsonModule": true,
+      "allowSyntheticDefaultImports": true
     },
     "files": [
-        "scraping/mod.ts"
+        "scraping/mod.ts",
+	"demos/userinfo.ts"
     ]
 }

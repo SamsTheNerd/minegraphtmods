@@ -2,10 +2,10 @@ import * as https from 'node:https';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 
-import {Mod} from './mod'
-import { Octokit, RequestError } from 'octokit';
+import {Mod} from './mod.ts'
+import { Octokit, RequestError } from "octokit";
 
-const SECRETS = require('../secrets.json')
+import SECRETS from '../secrets.json' assert { type: 'json' };
 
 const GH_URL_REGEX = /(?:.*github.com\/)([^\/]+)\/([^\/\n]+)/
 const ISSUE_GRABBER = /\/([0-9])+$/

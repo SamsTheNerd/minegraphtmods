@@ -1,8 +1,10 @@
 import * as readline from 'node:readline';
-import { Mod } from '../scraping/mod';
+import { Mod } from '../scraping/mod.ts';
 
 
-var USER_VIEW: { [key: string]:number[] } = require('../computedData/USER_VIEW.json')
+import USER_VIEW_RAW from '../computedData/USER_VIEW.json' assert { type: 'json'};
+const USER_VIEW:Record<string, number[] | undefined> = USER_VIEW_RAW
+// var USER_VIEW: { [key: string]:number[] } = require('../computedData/USER_VIEW.json')
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -10,11 +12,11 @@ const rl = readline.createInterface({
 });
 
 var doUserInfo = () => {
-    rl.question(`Input a github username (capitalization matters):\n`, async (user) => {
+    rl.question(`Input a github username (capitalization matters):\n`, async (user:string) => {
         if(!USER_VIEW.hasOwnProperty(user)){
             console.log(`user "${user}" not found in the dataset (could be a typo - check caps again or check the USER_VIEW.json to see if you're in there)\n`)
         } else {
-            var modids = USER_VIEW[user]
+            var modids:number[] = USER_VIEW[user]
             var ghds = await Promise.all(modids.map((modid) => {
                 var mod = Mod.getMod(modid)
                 return mod.getGHData();

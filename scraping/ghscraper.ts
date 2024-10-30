@@ -2,8 +2,8 @@ import * as https from 'node:https';
 import * as fs from 'node:fs';
 import * as fsp from 'node:fs/promises';
 
-import {Mod} from './mod'
-import { GHData, octokit} from './ghdata';
+import {Mod} from './mod.ts'
+import { GHData, octokit} from './ghdata.ts';
 
 var getAllMods = (): number[] => {
     return fs.readdirSync("./data/cfmeta", {
